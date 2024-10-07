@@ -10,11 +10,46 @@
     /* Basic CSS to make the map fill the screen */
     body { margin: 0; padding: 0; }
     #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+
+    /* Style for the legend */
+    #legend {
+      position: absolute;
+      background-color: white;
+      padding: 10px;
+      margin: 10px;
+      z-index: 1;
+      font-family: Arial, sans-serif;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+    #legend h3 {
+      margin: 0 0 10px;
+    }
+    #legend div {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    #legend span {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 5px;
+      border: 1px solid #000;
+    }
   </style>
 </head>
 <body>
   <!-- Create a div where the map will be placed -->
   <div id="map"></div>
+
+  <!-- Add legend -->
+  <div id="legend">
+    <h3>Travel Seasons</h3>
+    <div><span style="background-color: #77dd77;"></span> Best Season</div>
+    <div><span style="background-color: #b19cd9;"></span> Shoulder Season</div>
+    <div><span style="background-color: #ff6961;"></span> Worst Season</div>
+  </div>
 
   <!-- Load Mapbox JS library -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
@@ -32,6 +67,52 @@
 
     // Add zoom and rotation controls to the map
     map.addControl(new mapboxgl.NavigationControl());
-  </script>
-</body>
-</html>
+
+    // Wait for the map to load
+    map.on('load', function () {
+      // Add the source for countries
+      map.addSource('countries', {
+        'type': 'geojson',
+        'data': 'countries_with_seasons.geojson' // Ensure this path is correct
+      });
+
+      // Add a new layer to style the countries
+      map.addLayer({
+        'id': 'countries-layer',
+        'type': 'fill',
+        'source': 'countries',
+        'paint': {
+          'fill-color': [
+            'match',
+            ['get', 'season'],
+            'best', '#77dd77',        // Pastel green
+            'shoulder', '#b19cd9',    // Pastel purple
+            'worst', '#ff6961',       // Pastel red
+            '#ffffff' // Default color (white) if no match
+          ],
+          'fill-opacity': 0.7,
+          'fill-outline-color': '#000000' // Optional: Black outline
+        }
+      });
+
+      // Change the cursor to a pointer when over the countries layer
+      map.on('mouseenter', 'countries-layer', function () {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.on('mouseleave', 'countries-layer', function () {
+        map.getCanvas().style.cursor = '';
+      });
+
+      // Create a popup, but don't add it to the map yet
+      var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+      });
+
+      // Show popup on hover
+      map.on('mousemove', 'countries-layer', function (e) {
+        var countryName = e.features[0].properties.ADMIN;
+        var season = e.features[0].properties.season || 'Unknown';
+        popup.se
+
